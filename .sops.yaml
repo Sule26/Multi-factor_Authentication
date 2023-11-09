@@ -1,0 +1,5 @@
+creation_rules:
+  # https://keybase.io/sule26
+  # 01A5E75E0F3DECDF0907AD0E0CD49A8BF8612CF4
+  - path_regex: (.*)(\.enc)(\.\w+)?$
+    pgp: 01A5E75E0F3DECDF0907AD0E0CD49A8BF8612CF4

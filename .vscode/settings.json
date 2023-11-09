@@ -1,0 +1,4 @@
+{
+  "sops.enabled": true,
+  "sops.creationEnabled": true
+}
