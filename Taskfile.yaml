@@ -1,13 +1,13 @@
-version: '3'
+version: "3"
 dotenv:
   - ./database/.dec.env
 vars:
   MICROMAMBA_ENV: security
-  MICROMAMBA_FILE: '{{.MICROMAMBA_ENV}}.env.yaml'
+  MICROMAMBA_FILE: "{{.MICROMAMBA_ENV}}.env.yaml"
 tasks:
   env:set:
     sources:
-      - '{{.MICROMAMBA_FILE}}'
+      - "{{.MICROMAMBA_FILE}}"
       - requirements.txt
     cmd: micromamba create -f '{{.MICROMAMBA_FILE}}' -y
   setup:
@@ -16,7 +16,7 @@ tasks:
   run:app:
     deps:
       - env:set
-    cmd: micromamba -n '{{.MICROMAMBA_ENV}}' run python main.py
+    cmd: micromamba -n '{{.MICROMAMBA_ENV}}' run python -m src.mfa
   decrypt:
     dir: ./database
     sources:

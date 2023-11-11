@@ -1,9 +1,12 @@
 # from mfa.email import Email
 # from mfa.sms import Sms
+from typing import Tuple
 import tkinter as tk
 import psycopg2
-from typing import Tuple
+import qrcode
+import pyotp
 import os
+
 
 class App:
     WIDTH = 350
@@ -83,10 +86,11 @@ class App:
         self.register_frame.mainloop()
 
     def register_user(self) -> None:
+        
         conn, cursor = self.connect_database()
         cursor.execute(
             f"""
-            insert into account (username, password, email, phone) values ('{self.register_username.get()}', '{self.register_password.get()}', '{self.register_email.get()}', '{self.register_phone.get()}')
+            insert into account (username, password, email, phone, authy) values ('{self.register_username.get()}', '{self.register_password.get()}', '{self.register_email.get()}', '{self.register_phone.get()}', '{authy}')
             """
         )
         conn.commit()
