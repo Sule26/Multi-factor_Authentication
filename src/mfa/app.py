@@ -2,6 +2,7 @@ from .email import Email
 from .sms import SMS
 from .otp import OTP
 from typing import Tuple
+from loguru import logger
 import tkinter as tk
 import psycopg2
 import qrcode
@@ -94,26 +95,32 @@ class App:
         self.register_frame.mainloop()
 
     def register_user(self) -> None:
-        self.check_registry_entrys()
-        # authy = self.otp.generate_authenticator(self.email.get())
-        # conn, cursor = self.connect_database()
-        # cursor.execute(
-        #     f"""
-        #     insert into account (username, password, email, phone, authy) values ('{self.username.get()}', '{self.password.get()}', '"+55"+{self.email.get()}', '{self.phone.get()}', '{authy}')
-        #     """
-        # )
-        # conn.commit()
-        # cursor.close()
-        # qrcode.make(authy).save(f"{self.username}.png")
-        # self.register_frame.destroy()
+        if self.check_registry_entrys():
+            authy = self.otp.generate_authenticator(self.email.get())
+            phone_with_ddi = "+55" + self.phone.get()
+            conn, cursor = self.connect_database()
+            cursor.execute(
+                f"""
+                insert into account (username, password, email, phone, authy) values ('{self.username.get().lower()}', '{self.password.get()}', '{self.email.get().lower()}', '{phone_with_ddi}', '{authy}');
+                """
+            )
+            conn.commit()
+            cursor.close()
+            qrcode.make(authy)
+            self.register_frame.destroy()
 
     def check_registry_entrys(self) -> bool:
-        return [self.check_username(), self.check_password(), self.check_email(), self.check_phone()]
+        return all([self.check_username(), self.check_password(), self.check_email(), self.check_phone()])
 
     def check_username(self) -> bool:
         self.username_warning.grid(row=1, column=0, columnspan=2, sticky=tk.W)
+
         if self.username.get().strip() == "" or " " in self.username.get():
             self.username_warning.config(text="* Username can't be blank or space or have spaces")
+            return False
+
+        if self.check_if_username_in_use(self.username.get().lower()):
+            self.username_warning.config(text="* Username already in use")
             return False
 
         self.username_warning.grid_remove()
@@ -121,6 +128,7 @@ class App:
 
     def check_password(self) -> bool:
         self.password_warning.grid(row=3, column=0, columnspan=2, sticky=tk.W)
+
         if self.password.get().strip() == "" or " " in self.password.get():
             self.password_warning.config(text="* Password can't be blank or space or have spaces")
             return False
@@ -131,11 +139,17 @@ class App:
     def check_email(self) -> bool:
         pattern = re.compile(r"^[a-zA-Z0-9_.+-]+@gmail.com$")
         self.email_warning.grid(row=5, column=0, columnspan=2, sticky=tk.W)
+
         if self.email.get().strip() == "" or " " in self.email.get():
             self.email_warning.config(text="* Email can't be blank or have spaces")
             return False
+
         if len(re.findall(pattern, self.email.get())) == 0:
             self.email_warning.config(text="* Not valid email (must be gmail)")
+            return False
+
+        if self.check_if_email_in_use(self.email.get().lower()):
+            self.email_warning.config(text="* Email already in use")
             return False
 
         self.email_warning.grid_remove()
@@ -144,12 +158,37 @@ class App:
     def check_phone(self) -> bool:
         pattern = re.compile(r"^\d+$")
         self.phone_warning.grid(row=7, column=0, columnspan=2, sticky=tk.W)
+
         if self.phone.get().strip() == "" or " " in self.phone.get():
-            self.phone.config(highlightbackground="red")
             self.phone_warning.config(text="* Phone can't be blank or have spaces")
             return False
+
         if len(re.findall(pattern, self.phone.get())) == 0:
             self.phone_warning.config(text="* Phone can't have letters")
             return False
+
+        if len(self.phone.get()) != 11:
+            self.phone_warning.config(text="* Phone must have 11 digits (ddd + personal number)")
+            return False
+
+        if self.check_if_phone_in_use(self.phone.get()):
+            self.phone_warning.config(text="* Phone already in use")
+            return False
+
         self.phone_warning.grid_remove()
         return True
+
+    def check_if_username_in_use(self, username_to_check) -> bool:
+        conn, cursor = self.connect_database()
+        cursor.execute(f"""select exists(select username from account where username = '{username_to_check}')""")
+        return cursor.fetchone()[0]
+
+    def check_if_email_in_use(self, email_to_check) -> bool:
+        conn, cursor = self.connect_database()
+        cursor.execute(f"""select exists(select email from account where username = '{email_to_check}')""")
+        return cursor.fetchone()[0]
+
+    def check_if_phone_in_use(self, phone_to_check) -> bool:
+        conn, cursor = self.connect_database()
+        cursor.execute(f"""select exists(select phone from account where username = '{phone_to_check}')""")
+        return cursor.fetchone()[0]
