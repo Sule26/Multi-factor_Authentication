@@ -10,9 +10,12 @@ tasks:
       - "{{.MICROMAMBA_FILE}}"
       - requirements.txt
     cmd: micromamba create -f '{{.MICROMAMBA_FILE}}' -y
-  setup:
+  up:
     dir: ./database/
     cmd: docker compose up -d
+  down:
+    dir: ./database/
+    cmd: docker compose down
   run:app:
     deps:
       - env:set

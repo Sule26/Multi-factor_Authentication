@@ -1,16 +1,18 @@
-# from mfa.email import Email
-# from mfa.sms import Sms
+from .email import Email
+from .sms import SMS
+from .otp import OTP
 from typing import Tuple
 import tkinter as tk
 import psycopg2
 import qrcode
-import pyotp
 import os
+import re
 
 
 class App:
-    WIDTH = 350
-    HEIGHT = 350
+    WIDTH = 400
+    HEIGHT = 300
+    otp = OTP()
 
     def __init__(self) -> None:
         self.login_window()
@@ -41,7 +43,7 @@ class App:
 
         self.password_label = tk.Label(self.root, text="Password: ")
         self.password_label.grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
-        self.password = tk.Entry(self.root, width=30)
+        self.password = tk.Entry(self.root, show="*", width=30)
         self.password.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
 
         self.login_button = tk.Button(self.root, text="Login", width=30)
@@ -58,41 +60,96 @@ class App:
         # self.register_frame.geometry(f'{self.WIDTH}x{self.HEIGHT}')
         self.register_frame.resizable(False, False)
 
-        self.register_username_label = tk.Label(self.register_frame, text="Username: ")
-        self.register_username_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
-        self.register_username = tk.Entry(self.register_frame, width=30)
-        self.register_username.grid(row=0, column=1, padx=10, pady=10, sticky=tk.W)
+        self.username_label = tk.Label(self.register_frame, text="Username: ")
+        self.username_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
+        self.username = tk.Entry(self.register_frame, width=30)
+        self.username.grid(row=0, column=1, padx=10, pady=10, sticky=tk.W)
 
-        self.register_password_label = tk.Label(self.register_frame, text="Password: ")
-        self.register_password_label.grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
-        self.register_password = tk.Entry(self.register_frame, width=30)
-        self.register_password.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
+        self.username_warning = tk.Label(self.register_frame, text="", font=("Arial", 7), fg="red")
 
-        self.register_email_label = tk.Label(self.register_frame, text="Email: ")
-        self.register_email_label.grid(row=2, column=0)
-        self.register_email = tk.Entry(self.register_frame, width=30)
-        self.register_email.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
+        self.password_label = tk.Label(self.register_frame, text="Password: ")
+        self.password_label.grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
+        self.password = tk.Entry(self.register_frame, show="*", width=30)
+        self.password.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
 
-        self.register_phone_label = tk.Label(self.register_frame, text="Phone: ")
-        self.register_phone_label.grid(row=3, column=0)
-        self.register_phone = tk.Entry(self.register_frame, width=30)
-        self.register_phone.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
+        self.password_warning = tk.Label(self.register_frame, text="", font=("Arial", 7), fg="red")
 
-        self.register_register_button = tk.Button(
-            self.register_frame, text="Register", width=30, command=self.register_user
-        )
-        self.register_register_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky=tk.W + tk.E)
+        self.email_label = tk.Label(self.register_frame, text="Email: ")
+        self.email_label.grid(row=4, column=0, padx=10, pady=10, sticky=tk.W)
+        self.email = tk.Entry(self.register_frame, width=30)
+        self.email.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+
+        self.email_warning = tk.Label(self.register_frame, text="", font=("Arial", 7), fg="red")
+
+        self.phone_label = tk.Label(self.register_frame, text="Phone: ")
+        self.phone_label.grid(row=6, column=0, padx=10, pady=10, sticky=tk.W)
+        self.phone = tk.Entry(self.register_frame, width=30)
+        self.phone.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
+
+        self.phone_warning = tk.Label(self.register_frame, text="", font=("Arial", 7), fg="red")
+
+        self.register_button = tk.Button(self.register_frame, text="Register", width=30, command=self.register_user)
+        self.register_button.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky=tk.W + tk.E)
 
         self.register_frame.mainloop()
 
     def register_user(self) -> None:
-        
-        conn, cursor = self.connect_database()
-        cursor.execute(
-            f"""
-            insert into account (username, password, email, phone, authy) values ('{self.register_username.get()}', '{self.register_password.get()}', '{self.register_email.get()}', '{self.register_phone.get()}', '{authy}')
-            """
-        )
-        conn.commit()
-        cursor.close()
-        self.register_frame.destroy()
+        self.check_registry_entrys()
+        # authy = self.otp.generate_authenticator(self.email.get())
+        # conn, cursor = self.connect_database()
+        # cursor.execute(
+        #     f"""
+        #     insert into account (username, password, email, phone, authy) values ('{self.username.get()}', '{self.password.get()}', '"+55"+{self.email.get()}', '{self.phone.get()}', '{authy}')
+        #     """
+        # )
+        # conn.commit()
+        # cursor.close()
+        # qrcode.make(authy).save(f"{self.username}.png")
+        # self.register_frame.destroy()
+
+    def check_registry_entrys(self) -> bool:
+        return [self.check_username(), self.check_password(), self.check_email(), self.check_phone()]
+
+    def check_username(self) -> bool:
+        self.username_warning.grid(row=1, column=0, columnspan=2, sticky=tk.W)
+        if self.username.get().strip() == "" or " " in self.username.get():
+            self.username_warning.config(text="* Username can't be blank or space or have spaces")
+            return False
+
+        self.username_warning.grid_remove()
+        return True
+
+    def check_password(self) -> bool:
+        self.password_warning.grid(row=3, column=0, columnspan=2, sticky=tk.W)
+        if self.password.get().strip() == "" or " " in self.password.get():
+            self.password_warning.config(text="* Password can't be blank or space or have spaces")
+            return False
+
+        self.password_warning.grid_remove()
+        return True
+
+    def check_email(self) -> bool:
+        pattern = re.compile(r"^[a-zA-Z0-9_.+-]+@gmail.com$")
+        self.email_warning.grid(row=5, column=0, columnspan=2, sticky=tk.W)
+        if self.email.get().strip() == "" or " " in self.email.get():
+            self.email_warning.config(text="* Email can't be blank or have spaces")
+            return False
+        if len(re.findall(pattern, self.email.get())) == 0:
+            self.email_warning.config(text="* Not valid email (must be gmail)")
+            return False
+
+        self.email_warning.grid_remove()
+        return True
+
+    def check_phone(self) -> bool:
+        pattern = re.compile(r"^\d+$")
+        self.phone_warning.grid(row=7, column=0, columnspan=2, sticky=tk.W)
+        if self.phone.get().strip() == "" or " " in self.phone.get():
+            self.phone.config(highlightbackground="red")
+            self.phone_warning.config(text="* Phone can't be blank or have spaces")
+            return False
+        if len(re.findall(pattern, self.phone.get())) == 0:
+            self.phone_warning.config(text="* Phone can't have letters")
+            return False
+        self.phone_warning.grid_remove()
+        return True

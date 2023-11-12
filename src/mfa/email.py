@@ -1,5 +1,5 @@
 from email.message import EmailMessage
-from otp import OTP
+from .otp import OTP
 import os
 import ssl
 import smtplib

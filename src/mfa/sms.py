@@ -1,5 +1,5 @@
 from twilio.rest import Client
-from otp import OTP
+from .otp import OTP
 from loguru import logger
 import os
 
