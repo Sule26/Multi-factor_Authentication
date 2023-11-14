@@ -1,5 +1,5 @@
 from .modules import OTP, SMS, Email
-
+from PIL import ImageTk, Image
 from typing import Tuple
 from loguru import logger
 import tkinter as tk
@@ -107,21 +107,33 @@ class App:
 
         self.phone_warning = tk.Label(self.register_frame, text="", font=("Arial", 7), fg="red")
 
-        self.register_button = tk.Button(self.register_frame, text="Register", width=30, command=self.register_user)
+        self.register_button = tk.Button(self.register_frame, text="Register", width=30, command=lambda: [self.register_user(), self.qrcode_window()])
         self.register_button.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky=tk.W + tk.E)
 
         self.register_frame.mainloop()
 
-    def logged_window(self, text) -> None:
+    def qrcode_window(self) -> None:
+        self.qrcode_frame = tk.Tk()
+        self.qrcode_frame.title("Qrcode")
+        self.qrcode_frame.resizable(False, False)
+        self.qrcode = ImageTk.PhotoImage(Image.open("./qrcode.png"))
+        self.qrcode_label = tk.Label(image=self.qrcode)
+        self.qrcode_label.pack()
+        
+        self.qrcode_frame.mainloop()
+
+    def logged_window(self) -> None:
         self.logged_frame = tk.Tk()
         self.logged_frame.title("Result")
         self.logged_frame.geometry("200x100")
         self.logged_frame.resizable(False, False)
 
-        self.result_label = tk.Label(self.logged_frame, text=text, font=("Arial", 15))
+        self.result_label = tk.Label(self.logged_frame, text="Logged!", font=("Arial", 15))
         self.result_label.place(x=70, y=40)
 
-    def authenticate_window(self) -> None:
+        self.logged_frame.mainloop()
+
+    def authenticate_window(self, authentication_type) -> None:
         self.authenticate_frame = tk.Tk()
         self.authenticate_frame.title("Authenticate")
         # self.register_frame.geometry(f'{self.WIDTH}x{self.HEIGHT}')
@@ -139,22 +151,32 @@ class App:
             "authy": result[4],
         }
 
-        if self.authentication_choosen.get() == self.AUTHENTICATOR_OPTION[0]:
-            self.EMAIL.send_message(account["email"])
-
-        if self.authentication_choosen.get() == self.AUTHENTICATOR_OPTION[1]:
-            self.SMS.send_sms(account["phone"])
-
-        if self.authentication_choosen.get() == self.AUTHENTICATOR_OPTION[2]:
-            pass
-
         self.code_label = tk.Label(self.authenticate_frame, text="Insert code: ")
         self.code_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
         self.code = tk.Entry(self.authenticate_frame, width=30)
         self.code.grid(row=0, column=1, padx=10, pady=10, sticky=tk.W)
 
-        self.authenticate_button = tk.Button(self.authenticate_frame, text="Authenticate", width=30, command=self.login)
+        match authentication_type:
+            case self.AUTHENTICATOR_OPTION.index(0):
+                self.EMAIL.send_message(account["email"])
+                
+            case self.AUTHENTICATOR_OPTION.index(1):
+                self.SMS.send_sms(account["phone"])
+
+            # case self.AUTHENTICATOR_OPTION.index(2):
+                pass
+            case _:
+                raise NotImplementedError
+        
+        self.authenticate_button = tk.Button(self.authenticate_frame, text="Authenticate", width=30, command=self.authenticate)
         self.authenticate_button.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky=tk.W + tk.E)
+
+        conn.close()
+        self.authenticate_frame.mainloop()
+
+    def authenticate(self) -> None:
+        if self.OTP.verify(self.code.get()):
+            self.logged_window()
 
     def login(self) -> None:
         if self.check_login_entry():
@@ -169,7 +191,7 @@ class App:
 
             if connected:
                 self.login_warning.grid_remove()
-                self.authenticate_window()
+                self.authenticate_window(self.authentication_choosen.get())
 
             else:
                 self.login_warning.config(text="Username or password is wrong")
@@ -247,6 +269,10 @@ class App:
 
         if self.password.get().strip() == "" or " " in self.password.get():
             self.password_warning.config(text="* Password can't be blank or space or have spaces")
+            return False
+        
+        if len(self.password.get()) >=8:
+            self.password_warning.config(text="* Password must have at least 8 characters")
             return False
 
         self.password_warning.grid_remove()
