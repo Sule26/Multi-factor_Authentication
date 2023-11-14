@@ -11,8 +11,8 @@ import os
 class OTP:
     def generate_code(self) -> str:
         self.totp = pyotp.TOTP(s="base32secret3232", interval=300)
-        code = self.totp.now()
-        return code
+        self.current_code = self.totp.now()
+        return self.current_code
 
     def generate_authenticator(self, email) -> None:
         authy = pyotp.totp.TOTP(os.environ.get("PYOTP_KEY")).provisioning_uri(
@@ -21,7 +21,7 @@ class OTP:
         return authy
 
     def verify(self, code) -> bool:
-        return self.totp.verify(code)
+        return code == self.current_code
 
 
 class Email:
