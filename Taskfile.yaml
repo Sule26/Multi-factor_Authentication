@@ -19,6 +19,7 @@ tasks:
   run:app:
     deps:
       - env:set
+      - up
     cmd: micromamba -n '{{.MICROMAMBA_ENV}}' run python -m src.mfa
   decrypt:
     dir: ./database
@@ -32,3 +33,7 @@ tasks:
       - curl -LO https://github.com/getsops/sops/releases/download/v3.8.1/sops-v3.8.1.linux.amd64
       - sudo mv sops-v3.8.1.linux.amd64 /usr/local/bin/sops
       - sudo chmod +x /usr/local/bin/sops
+  delete:volume:
+    deps:
+      - down
+    cmd: docker volume rm database_postgres-data
