@@ -5,3 +5,4 @@ tk
 psycopg2-binary
 twilio
 pillow
+types-Pillow

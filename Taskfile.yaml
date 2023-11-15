@@ -21,6 +21,10 @@ tasks:
       - env:set
       - up
     cmd: micromamba -n '{{.MICROMAMBA_ENV}}' run python -m src.mfa
+  mypy:
+    deps:
+      - env:set
+    cmd: micromamba -n '{{.MICROMAMBA_ENV}}' run mypy src/mfa/__main__.py
   decrypt:
     dir: ./database
     sources:
