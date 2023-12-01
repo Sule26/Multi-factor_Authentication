@@ -5,7 +5,6 @@ from loguru import logger
 from tkinter import *
 from PIL import Image
 import psycopg2
-import pyotp
 import qrcode
 import os
 import re
