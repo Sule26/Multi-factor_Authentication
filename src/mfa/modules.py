@@ -59,6 +59,7 @@ class Email:
 class SMS:
     ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
     AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
+    TWILIO_PHONE = os.environ.get("TWILIO_PHONE")
     CLIENT = Client(ACCOUNT_SID, AUTH_TOKEN)
 
     def generate_code(self, key: str) -> str:
@@ -68,7 +69,7 @@ class SMS:
 
     def send_sms(self, key: str, phone_receiver: str) -> None:
         self.CLIENT.messages.create(
-            from_=os.environ.get("TWILIO_PHONE"), body=self.generate_code(key), to=phone_receiver
+            from_=self.TWILIO_PHONE, body=self.generate_code(key), to=phone_receiver
         )
 
     def verify_code(self, key: str, code: str) -> bool:
