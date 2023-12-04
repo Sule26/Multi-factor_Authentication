@@ -27,7 +27,7 @@ class Authy:
 
 
 class Email:
-    EMAIL_SENDER = str(os.environ.get("EMAIL"))
+    EMAIL_ADDRESS = str(os.environ.get("EMAIL_ADDRESS"))
     EMAIL_PASSWORD = str(os.environ.get("EMAIL_PASSWORD"))
     SUBJECT = "Code"
 
@@ -38,15 +38,15 @@ class Email:
 
     def send_message(self, key: str, email_receiver: str) -> None:
         em = EmailMessage()
-        em["From"] = self.EMAIL_SENDER
+        em["From"] = self.EMAIL_ADDRESS
         em["To"] = email_receiver
         em["subject"] = self.SUBJECT
         em.set_content(self.generate_code(key))
 
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
-            smtp.login(user=self.EMAIL_SENDER, password=self.EMAIL_PASSWORD)
-            smtp.sendmail(self.EMAIL_SENDER, email_receiver, em.as_string())
+            smtp.login(user=self.EMAIL_ADDRESS, password=self.EMAIL_PASSWORD)
+            smtp.sendmail(self.EMAIL_ADDRESS, email_receiver, em.as_string())
 
     def verify_code(self, key: str, code: str) -> bool:
         if hasattr(Email, "totp"):

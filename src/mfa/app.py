@@ -139,8 +139,8 @@ class App:
         self.logged_frame.geometry("200x100")
         self.logged_frame.resizable(False, False)
 
-        self.result_label = Label(master=self.logged_frame, text="Logged!", font=("Arial", 15))
-        self.result_label.place(x=70, y=40)
+        self.result_label = Label(master=self.logged_frame, text="Logged In!", font=("Arial", 15))
+        self.result_label.place(x=55, y=40)
 
         self.logged_frame.mainloop()
 
@@ -173,7 +173,7 @@ class App:
 
         # if authentication_type == self.AUTHENTICATOR_OPTION[2]:
             # Don't need to generate code so it doesn't need to do anything
-            pass
+            # pass
 
         self.code_label = Label(master=self.authenticate_frame, text="Insert code: ")
         self.code_label.grid(row=0, column=0, padx=10, pady=10, sticky=W)
@@ -224,9 +224,9 @@ class App:
         return all([self.check_login_username(), self.check_login_password()])
 
     def register_user(self) -> None:
-        if self.check_registry_entrys():
+        if self.check_register_entries():
             user_key = generate_key()
-            logger.debug(user_key)
+            # logger.debug(user_key)
             authy = self.AUTHY.generate_code(user_key, self.register_email.get())
             phone_with_ddi = "+55" + self.register_phone.get()
             conn, cursor = self.connect_database()
@@ -260,7 +260,7 @@ class App:
         self.login_password_warning.grid_remove()
         return True
 
-    def check_registry_entrys(self) -> bool:
+    def check_register_entries(self) -> bool:
         return all(
             [
                 self.check_registry_username(),
